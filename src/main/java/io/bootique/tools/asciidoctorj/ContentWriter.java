@@ -37,7 +37,12 @@ class ContentWriter {
     private final InternalLogger logger;
 
     ContentWriter(Document document, InternalLogger logger) {
-        destinationDir = document.getOptions().get(Options.DESTINATION_DIR).toString();
+        Object destDir = document.getOptions().get(Options.TO_DIR);
+        if(destDir == null) {
+            logger.error("No destination directory");
+            throw new IllegalStateException("No destination directory found");
+        }
+        destinationDir = destDir.toString();
         this.logger = logger;
     }
 

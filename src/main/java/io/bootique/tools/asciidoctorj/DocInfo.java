@@ -30,38 +30,43 @@ class DocInfo {
     private static final String EMPTY_FRONT_MATTER = "---\n---\n\n";
     private static final int MULTIPAGE_DEFAULT_LEVEL = 1;
 
+    private static final String HEADER = "hugo-header";
+    private static final String MULTIPAGE = "hugo-multipage";
+    private static final String MULTIPAGE_LEVEL = "hugo-multipage-level";
+    private static final String MULTIPAGE_HEADER = "hugo-multipage-header";
+    private static final String MULTIPAGE_REF = "hugo-multipage-ref";
+    private static final String FONT_AWESOME_ICONS = "hugo-font-awesome-icons";
+
     String documentName;
-
     String header;
-
     String multipageHeader;
-
     boolean multipage;
-
     int multipageLevel;
-
     String multipageRef;
+    boolean convertToFa;
 
     @SuppressWarnings("unchecked")
     DocInfo(Document document) {
         documentName = ((Map<String, ?>)document.getOptions().get(Options.ATTRIBUTES)).get("docname").toString();
-        String headerFile = document.getAttribute("hugo-header", "").toString();
+        String headerFile = document.getAttribute(HEADER, "").toString();
         if(!headerFile.isEmpty()) {
             header = document.readAsset(headerFile, Collections.emptyMap());
         } else {
             header = EMPTY_FRONT_MATTER;
         }
         multipage = Boolean.parseBoolean(document
-                .getAttribute("multipage", "false").toString());
+                .getAttribute(MULTIPAGE, "false").toString());
         multipageLevel = Integer.parseInt(document
-                .getAttribute("multipage-level", MULTIPAGE_DEFAULT_LEVEL).toString());
-        String multipageHeaderFile = document.getAttribute("multipage-header", "").toString();
+                .getAttribute(MULTIPAGE_LEVEL, MULTIPAGE_DEFAULT_LEVEL).toString());
+        String multipageHeaderFile = document.getAttribute(MULTIPAGE_HEADER, "").toString();
         if(!multipageHeaderFile.isEmpty()) {
             multipageHeader = document.readAsset(multipageHeaderFile, Collections.emptyMap());
         } else {
             multipageHeader = EMPTY_FRONT_MATTER;
         }
-        multipageRef = document.getAttribute("multipage-ref", "").toString();
+        multipageRef = document.getAttribute(MULTIPAGE_REF, "").toString();
+        convertToFa = Boolean.parseBoolean(document
+                .getAttribute(FONT_AWESOME_ICONS, "true").toString());
     }
 
     String documentName() {
@@ -86,5 +91,9 @@ class DocInfo {
 
     String multipageRef() {
         return multipageRef;
+    }
+
+    boolean convertToFa() {
+        return convertToFa;
     }
 }

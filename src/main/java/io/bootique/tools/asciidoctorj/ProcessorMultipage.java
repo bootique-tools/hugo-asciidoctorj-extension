@@ -27,48 +27,43 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-class MultipageProcessor {
-    private final DocInfo docInfo;
-    private final InternalLogger logger;
-    private final ContentWriter contentWriter;
-    private String indexPageContent;
+/**
+ * Split document to a separate pages if required
+ */
+class ProcessorMultipage implements ContentProcessor {
 
-    MultipageProcessor(DocInfo docInfo, ContentWriter contentWriter, InternalLogger logger, String indexPageContent) {
-        this.docInfo = docInfo;
-        this.logger = logger;
-        this.contentWriter = contentWriter;
-        this.indexPageContent = indexPageContent;
-    }
+    ProcessorContext context;
 
-    void process() {
-        if (!docInfo.isMultipage()) {
-            return;
+    public String process(ProcessorContext context, String indexPageContent) {
+        this.context = context;
+        if (!context.docInfo().isMultipage()) {
+            return indexPageContent;
         }
 
         Document jsoupDoc = Jsoup.parseBodyFragment(indexPageContent);
         List<Section> rootSections = sectionsOnLevel(jsoupDoc, jsoupDoc, 1);
 
-        buildIndexPage(rootSections);
         buildContentPages(rootSections);
         buildTocPage(rootSections);
+        return buildIndexPage(rootSections);
     }
 
-    private void buildIndexPage(List<Section> sections) {
+    private String buildIndexPage(List<Section> sections) {
         StringBuilder sb = new StringBuilder();
         sectionListHtml(sections, sb);
-        this.indexPageContent = sb.toString();
+        return sb.toString();
     }
 
     private void buildTocPage(List<Section> indexSections) {
         StringBuilder sb = new StringBuilder("<div id=\"toc\" class=\"toc toc-side\">");
         buildTocLevel(sb, indexSections, 1);
         sb.append("</div>");
-        contentWriter.addContent(docInfo.documentName() + ".toc.html", sb.toString());
+        context.writer().addContent(context.docInfo().documentName() + ".toc.html", sb.toString());
     }
 
     private void buildContentPages(List<Section> sections) {
         sections.forEach(s -> {
-            contentWriter.addContent(s.documentName(), docInfo.documentName(), s.content());
+            context.writer().addContent(s.documentName(), context.docInfo().documentName(), s.content());
             buildContentPages(s.subsections());
         });
     }
@@ -96,7 +91,7 @@ class MultipageProcessor {
             }
 
             String id = ref.substring(1);
-            Element sectionRoot = findSectionRoot(root, ref, docInfo.multipageLevel());
+            Element sectionRoot = findSectionRoot(root, ref, context.docInfo().multipageLevel());
             if(sectionRoot != null) {
                 if(!id.equals(sectionRoot.id())) {
                     id = sectionRoot.id() + "#" + id;
@@ -112,12 +107,12 @@ class MultipageProcessor {
                 .map(el -> {
                     Element sectionHeader = getSectionHeader(el, currentLevel);
                     if (sectionHeader == null) {
-                        logger.warn("No header for a section " + el.children().iterator().next().outerHtml());
+                        context.logger().warn("No header for a section " + el.children().iterator().next().outerHtml());
                         return null;
                     }
                     String sectionId = sectionHeader.id();
                     String title = el.child(0).text();
-                    if (currentLevel < docInfo.multipageLevel()) {
+                    if (currentLevel < context.docInfo().multipageLevel()) {
                         List<Section> subsections = sectionsOnLevel(root, el, currentLevel + 1);
                         String content1 = subsections.isEmpty()
                                 ? header(title) + fixAnchors(root, el)
@@ -136,7 +131,7 @@ class MultipageProcessor {
         if(chapterNumber != -1) {
             title = title.substring(chapterNumber + 2);
         }
-        return docInfo.multipageHeader()
+        return context.docInfo().multipageHeader()
                 .replaceAll("\\{title}", title);
     }
 
@@ -159,11 +154,7 @@ class MultipageProcessor {
     }
 
     private String ref(String sectionId) {
-        return docInfo.multipageRef() + docInfo.documentName() + "/" + sectionId;
-    }
-
-    String getIndexPageContent() {
-        return indexPageContent;
+        return context.docInfo().multipageRef() + context.docInfo().documentName() + "/" + sectionId;
     }
 
     private Element findSectionRoot(Element element, String selector, int level) {
@@ -191,7 +182,7 @@ class MultipageProcessor {
                 return inner;
             }
         }
-        logger.warn("Asciidoc multipage processor: No header for section " + target.id());
+        context.logger().warn("Asciidoc multipage processor: No header for section " + target.id());
         return null;
     }
 
