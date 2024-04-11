@@ -19,6 +19,7 @@
 
 package io.bootique.tools.asciidoctorj;
 
+import org.asciidoctor.Options;
 import org.asciidoctor.ast.Document;
 import org.asciidoctor.extension.Postprocessor;
 
@@ -84,6 +85,12 @@ public class HugoExtension extends Postprocessor {
      */
     @Override
     public String process(Document document, String output) {
+        Object backend = document.getOptions().get(Options.BACKEND);
+        if(!"html5".equals(backend)) {
+            throw new IllegalStateException("HugoExtension only compatible with `html5` backend, tried to use with "
+                    + "'" + backend + "'");
+        }
+
         ContentWriter contentWriter = new ContentWriter(document, logger);
         ProcessorContext context = new ProcessorContext(new DocInfo(document), contentWriter, logger);
         for(ContentProcessor processor : CONTENT_PROCESSORS) {
