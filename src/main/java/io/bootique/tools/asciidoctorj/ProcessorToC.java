@@ -37,7 +37,7 @@ class ProcessorToC implements ContentProcessor {
         String tocEndString = "</ul>\n</div>";
         int end = content.indexOf(tocEndString, start);
         if(end == -1) {
-            // bad, no end..
+            // bad, no end
             return content;
         }
 

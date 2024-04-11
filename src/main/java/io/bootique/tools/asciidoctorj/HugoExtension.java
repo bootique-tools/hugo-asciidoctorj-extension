@@ -35,10 +35,12 @@ import java.util.Map;
  * Extension controlled by attributes in *.adoc file:
  * <ul>
  *     <li>hugo-header: header file name, if not set empty 'front-matter' will be used
- *     <li>multipage: split document to a separate pages
- *     <li>multipage-level: nested section level that will be used for a single page content in a multipage documents
- *     <li>multipage-header: header file name to add to a multipage documents, index page will always use cayenne-header
- *     <li>multipage-ref: reference prefix for a multipage navigation
+ *     <li>hugo-font-awesome-icons: convert icons to a FontAwesome compatible variant (true/false, default is true)
+ *     <li>hugo-multipage: split document to a separate pages (true/false, default is false)
+ *     <li>hugo-multipage-level: nested section level that will be used for a single page content in a multipage documents (default is 1)
+ *     <li>hugo-multipage-header: header file name to add to a multipage documents, index page will always use `hugo-header`,
+ *         if not set empty 'front-matter' will be used
+ *     <li>hugo-multipage-ref: reference prefix for a multipage navigation
  * </ul>
  */
 @SuppressWarnings("unused")
