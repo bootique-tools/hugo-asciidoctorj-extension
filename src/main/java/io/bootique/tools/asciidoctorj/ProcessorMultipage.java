@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
  */
 class ProcessorMultipage implements ContentProcessor {
 
+    private int weightCounter = 1;
+
     ProcessorContext context;
 
     public String process(ProcessorContext context, String indexPageContent) {
@@ -125,10 +127,10 @@ class ProcessorMultipage implements ContentProcessor {
                     String title = el.child(0).text();
                     if (currentLevel < context.docInfo().multipageLevel()) {
                         List<Section> subsections = sectionsOnLevel(root, el, currentLevel + 1);
-                        String content1 = subsections.isEmpty()
+                        String content = subsections.isEmpty()
                                 ? header(title) + fixAnchors(root, el)
                                 : buildIndexSection(title, subsections);
-                        return new Section(sectionId, title, content1, subsections);
+                        return new Section(sectionId, title, content, subsections);
                     } else {
                         return new Section(sectionId, title, header(title) + fixAnchors(root, el));
                     }
@@ -142,8 +144,10 @@ class ProcessorMultipage implements ContentProcessor {
         if(chapterNumber != -1) {
             title = title.substring(chapterNumber + 2);
         }
-        return context.docInfo().multipageHeader()
+        String content = context.docInfo().multipageHeader()
                 .replaceAll("\\{title}", title);
+        content = content.replaceAll("\\{weight}", Integer.toString(10 * weightCounter++));
+        return content;
     }
 
     private String buildIndexSection(String title, List<Section> subsections) {
