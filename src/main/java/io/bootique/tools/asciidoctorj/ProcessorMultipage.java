@@ -66,7 +66,12 @@ class ProcessorMultipage implements ContentProcessor {
             context.writer().addContent(fileName, sb.toString());
         } else {
             Document existingToCDoc = Jsoup.parseBodyFragment(existingToC);
-            String toc = fixAnchors(jsoupDoc, existingToCDoc);
+            Element firstChild = existingToCDoc.body().firstElementChild();
+            if(firstChild == null) {
+                context.logger().warn("Empty ToC content");
+                return;
+            }
+            String toc = fixAnchors(jsoupDoc, firstChild, true);
             context.writer().addContent(fileName, toc);
         }
     }
@@ -93,7 +98,7 @@ class ProcessorMultipage implements ContentProcessor {
         sb.append("</ul>\n");
     }
 
-    private String fixAnchors(Element root, Element element) {
+    private String fixAnchors(Element root, Element element, boolean addId) {
         element.select("a:not(.anchor)").forEach(el -> {
             String ref = el.attr("href");
             if (!ref.startsWith("#")) { // we are interested only in cross-docs references
@@ -101,16 +106,18 @@ class ProcessorMultipage implements ContentProcessor {
             }
 
             String id = ref.substring(1);
+            String refId = Section.normalizeId(id);
             Element sectionRoot = findSectionRoot(root, ref, context.docInfo().multipageLevel());
             if(sectionRoot != null) {
                 String sectionRootId = Section.normalizeId(sectionRoot.id());
-                if(!Section.normalizeId(id).equals(sectionRootId)) {
-                    id = sectionRootId + "#" + id;
-                } else {
-                    id = Section.normalizeId(id);
+                if(!refId.equals(sectionRootId)) {
+                    refId = sectionRootId + "#" + id;
                 }
             }
-            el.attr("href", ref(id));
+            el.attr("href", ref(refId));
+            if(addId) {
+                el.id(refId);
+            }
         });
         return element.outerHtml();
     }
@@ -128,11 +135,11 @@ class ProcessorMultipage implements ContentProcessor {
                     if (currentLevel < context.docInfo().multipageLevel()) {
                         List<Section> subsections = sectionsOnLevel(root, el, currentLevel + 1);
                         String content = subsections.isEmpty()
-                                ? header(title) + fixAnchors(root, el)
+                                ? header(title) + fixAnchors(root, el, false)
                                 : buildIndexSection(title, subsections);
                         return new Section(sectionId, title, content, subsections);
                     } else {
-                        return new Section(sectionId, title, header(title) + fixAnchors(root, el));
+                        return new Section(sectionId, title, header(title) + fixAnchors(root, el, false));
                     }
                 })
                 .filter(Objects::nonNull)
