@@ -29,14 +29,14 @@ class Section implements Comparable<Section> {
     private final List<Section> subsections;
 
     Section(String sectionId, String title, String content) {
-        this.sectionId = sectionId;
+        this.sectionId = normalizeId(sectionId);
         this.title = title;
         this.content = content;
         this.subsections = List.of();
     }
 
     Section(String sectionId, String title, String content, List<Section> subsections) {
-        this.sectionId = sectionId;
+        this.sectionId = normalizeId(sectionId);
         this.title = title;
         this.content = content;
         this.subsections = subsections;
@@ -65,5 +65,16 @@ class Section implements Comparable<Section> {
     @Override
     public int compareTo(Section o) {
         return title.compareTo(o.title());
+    }
+
+    static String normalizeId(String sectionId) {
+        int idx = 0;
+        while(sectionId.charAt(idx) == '_') {
+            idx++;
+        }
+        if(idx != 0) {
+            return sectionId.substring(idx);
+        }
+        return sectionId;
     }
 }

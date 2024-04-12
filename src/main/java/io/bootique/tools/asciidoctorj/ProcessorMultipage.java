@@ -93,7 +93,7 @@ class ProcessorMultipage implements ContentProcessor {
             String id = ref.substring(1);
             Element sectionRoot = findSectionRoot(root, ref, context.docInfo().multipageLevel());
             if(sectionRoot != null) {
-                if(!id.equals(sectionRoot.id())) {
+                if(!Section.normalizeId(id).equals(sectionRoot.id())) {
                     id = sectionRoot.id() + "#" + id;
                 }
             }
