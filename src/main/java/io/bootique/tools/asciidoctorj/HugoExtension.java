@@ -92,7 +92,7 @@ public class HugoExtension extends Postprocessor {
         }
 
         ContentWriter contentWriter = new ContentWriter(document, logger);
-        ProcessorContext context = new ProcessorContext(new DocInfo(document), contentWriter, logger);
+        ProcessorContext context = new ProcessorContext(new DocInfo(document, logger), contentWriter, logger);
         for(ContentProcessor processor : CONTENT_PROCESSORS) {
             output = processor.process(context, output);
         }

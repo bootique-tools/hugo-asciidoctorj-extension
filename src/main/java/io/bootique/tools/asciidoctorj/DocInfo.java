@@ -46,11 +46,15 @@ class DocInfo {
     boolean convertToFa;
 
     @SuppressWarnings("unchecked")
-    DocInfo(Document document) {
+    DocInfo(Document document, InternalLogger logger) {
         documentName = ((Map<String, ?>)document.getOptions().get(Options.ATTRIBUTES)).get("docname").toString();
         String headerFile = document.getAttribute(HEADER, "").toString();
         if(!headerFile.isEmpty()) {
             header = document.readAsset(headerFile, Collections.emptyMap());
+            if(header == null) {
+                logger.warn("Header file '" + headerFile + "' not found. Using a default header.");
+                header = EMPTY_FRONT_MATTER;
+            }
         } else {
             header = EMPTY_FRONT_MATTER;
         }
@@ -61,6 +65,10 @@ class DocInfo {
         String multipageHeaderFile = document.getAttribute(MULTIPAGE_HEADER, "").toString();
         if(!multipageHeaderFile.isEmpty()) {
             multipageHeader = document.readAsset(multipageHeaderFile, Collections.emptyMap());
+            if(multipageHeader == null) {
+                logger.warn("Multipage header file '" + multipageHeaderFile + "' not found. Using a default header.");
+                multipageHeader = EMPTY_FRONT_MATTER;
+            }
         } else {
             multipageHeader = EMPTY_FRONT_MATTER;
         }
