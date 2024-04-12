@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 class ContentWriter {
 
@@ -52,6 +53,15 @@ class ContentWriter {
 
     void addContent(String fileName, String folder, String content) {
         generatedContent.add(new Content(fileName, folder, content));
+    }
+
+    String getContent(String fileName, String folder) {
+        for(Content content : generatedContent) {
+            if(Objects.equals(fileName, content.fileName) && Objects.equals(folder, content.folder)) {
+                return content.content;
+            }
+        }
+        return null;
     }
 
     void flush() {

@@ -44,7 +44,7 @@ class ProcessorMultipage implements ContentProcessor {
         List<Section> rootSections = sectionsOnLevel(jsoupDoc, jsoupDoc, 1);
 
         buildContentPages(rootSections);
-        buildTocPage(rootSections);
+        buildTocPage(jsoupDoc, rootSections);
         return buildIndexPage(rootSections);
     }
 
@@ -54,11 +54,19 @@ class ProcessorMultipage implements ContentProcessor {
         return sb.toString();
     }
 
-    private void buildTocPage(List<Section> indexSections) {
-        StringBuilder sb = new StringBuilder("<div id=\"toc\" class=\"toc toc-side\">");
-        buildTocLevel(sb, indexSections, 1);
-        sb.append("</div>");
-        context.writer().addContent(context.docInfo().documentName() + ".toc.html", sb.toString());
+    private void buildTocPage(Document jsoupDoc, List<Section> indexSections) {
+        String fileName = context.docInfo().documentName() + ".toc.html";
+        String existingToC = context.writer().getContent(fileName, null);
+        if(existingToC == null) {
+            StringBuilder sb = new StringBuilder("<div id=\"toc\" class=\"toc toc-side\">");
+            buildTocLevel(sb, indexSections, 1);
+            sb.append("</div>");
+            context.writer().addContent(fileName, sb.toString());
+        } else {
+            Document existingToCDoc = Jsoup.parseBodyFragment(existingToC);
+            String toc = fixAnchors(jsoupDoc, existingToCDoc);
+            context.writer().addContent(fileName, toc);
+        }
     }
 
     private void buildContentPages(List<Section> sections) {
@@ -93,8 +101,11 @@ class ProcessorMultipage implements ContentProcessor {
             String id = ref.substring(1);
             Element sectionRoot = findSectionRoot(root, ref, context.docInfo().multipageLevel());
             if(sectionRoot != null) {
-                if(!Section.normalizeId(id).equals(sectionRoot.id())) {
-                    id = sectionRoot.id() + "#" + id;
+                String sectionRootId = Section.normalizeId(sectionRoot.id());
+                if(!Section.normalizeId(id).equals(sectionRootId)) {
+                    id = sectionRootId + "#" + id;
+                } else {
+                    id = Section.normalizeId(id);
                 }
             }
             el.attr("href", ref(id));
