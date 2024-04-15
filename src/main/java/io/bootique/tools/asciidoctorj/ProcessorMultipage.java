@@ -132,14 +132,15 @@ class ProcessorMultipage implements ContentProcessor {
                     }
                     String sectionId = sectionHeader.id();
                     String title = el.child(0).text();
+                    String header = header(title);
                     if (currentLevel < context.docInfo().multipageLevel()) {
                         List<Section> subsections = sectionsOnLevel(root, el, currentLevel + 1);
                         String content = subsections.isEmpty()
-                                ? header(title) + fixAnchors(root, el, false)
-                                : buildIndexSection(title, subsections);
+                                ? header + fixAnchors(root, el, false)
+                                : buildIndexSection(header, title, subsections);
                         return new Section(sectionId, title, content, subsections);
                     } else {
-                        return new Section(sectionId, title, header(title) + fixAnchors(root, el, false));
+                        return new Section(sectionId, title, header + fixAnchors(root, el, false));
                     }
                 })
                 .filter(Objects::nonNull)
@@ -157,8 +158,8 @@ class ProcessorMultipage implements ContentProcessor {
         return content;
     }
 
-    private String buildIndexSection(String title, List<Section> subsections) {
-        StringBuilder sb = new StringBuilder(header(title));
+    private String buildIndexSection(String header, String title, List<Section> subsections) {
+        StringBuilder sb = new StringBuilder(header);
         sb.append("<div><h2>").append(title).append("</h2>\n");
         sectionListHtml(subsections, sb);
         return sb.append("</div>\n").toString();
