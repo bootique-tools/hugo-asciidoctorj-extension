@@ -26,6 +26,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,9 +102,9 @@ class ContentWriter {
 
         Path path(String destDir) {
             if(folder != null) {
-                return Path.of(destDir, folder, fileName);
+                return Paths.get(destDir, folder, fileName);
             } else {
-                return Path.of(destDir, fileName);
+                return Paths.get(destDir, fileName);
             }
         }
     }

@@ -19,6 +19,7 @@
 
 package io.bootique.tools.asciidoctorj;
 
+import java.util.Collections;
 import java.util.List;
 
 class Section implements Comparable<Section> {
@@ -32,7 +33,7 @@ class Section implements Comparable<Section> {
         this.sectionId = normalizeId(sectionId);
         this.title = title;
         this.content = content;
-        this.subsections = List.of();
+        this.subsections = Collections.emptyList();
     }
 
     Section(String sectionId, String title, String content, List<Section> subsections) {

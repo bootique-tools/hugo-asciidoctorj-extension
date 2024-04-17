@@ -23,6 +23,7 @@ import org.asciidoctor.Options;
 import org.asciidoctor.ast.Document;
 import org.asciidoctor.extension.Postprocessor;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +50,7 @@ public class HugoExtension extends Postprocessor {
 
     private final InternalLogger logger;
 
-    private final static List<ContentProcessor> CONTENT_PROCESSORS = List.of(
+    private final static List<ContentProcessor> CONTENT_PROCESSORS = Arrays.asList(
             new ProcessorToC(),
             new ProcessorFaIcons(),
             new ProcessorHtmlContent(),
