@@ -46,7 +46,7 @@
     <licenses>
         <license>
             <name>Apache 2.0 License</name>
-            <url>https://github.com/bootique-tools/hugo-asciidoctorj-extension/blob/master/LICENSE.txt</url>
+            <url>https://github.com/bootique-tools/hugo-asciidoctorj-extension/blob/main/LICENSE.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -64,7 +64,7 @@
         <connection>scm:git:https://github.com/bootique-tools/hugo-asciidoctorj-extension</connection>
         <developerConnection>scm:git:ssh://git@github.com/bootique-tools/hugo-asciidoctorj-extension</developerConnection>
         <url>https://github.com/bootique-tools/hugo-asciidoctorj-extension</url>
-        <tag>1.0-M1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
