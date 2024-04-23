@@ -1,0 +1,507 @@
+<div id="content">
+    <div id="preamble">
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>"DFLib" (short for "DataFrame Library") is a lightweight, pure Java implementation of
+                    <code>DataFrame</code>. <code>DataFrame</code> is a
+                    very common structure in data science and Big Data worlds. It provides operations like search,
+                    filtering, joins, aggregations, statistical functions, etc., that are reminiscent of SQL (also of
+                    Excel), except you run
+                    them in your app over dynamic in-memory data sets.</p>
+            </div>
+        </div>
+    </div>
+    <div class="sect1">
+        <h2 id="_getting_started_with_dflib">Getting Started with DFLib</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>Include DFLib in a project. Assuming you are using Maven, start by declaring a "BOM" to have a common
+                    version for
+                    multiple DFLib modules:</p>
+            </div>
+            <div class="listingblock">
+                <div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span class="tag">&lt;dependencyManagement&gt;</span>
+  <span class="tag">&lt;dependencies&gt;</span>
+    <span class="tag">&lt;dependency&gt;</span>
+      <span class="tag">&lt;groupId&gt;</span>com.nhl.dflib<span class="tag">&lt;/groupId&gt;</span>
+      <span class="tag">&lt;artifactId&gt;</span>dflib-bom<span class="tag">&lt;/artifactId&gt;</span>
+      <span class="tag">&lt;version&gt;</span>0.18<span class="tag">&lt;/version&gt;</span>
+      <span class="tag">&lt;type&gt;</span>pom<span class="tag">&lt;/type&gt;</span>
+      <span class="tag">&lt;scope&gt;</span>import<span class="tag">&lt;/scope&gt;</span>
+    <span class="tag">&lt;/dependency&gt;</span>
+  <span class="tag">&lt;/dependencies&gt;</span>
+<span class="tag">&lt;/dependencyManagement&gt;</span></code></pre>
+                </div>
+            </div>
+            <div class="paragraph">
+                <p>Next include DFLib core as a dependency:</p>
+            </div>
+            <div class="listingblock">
+                <div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span class="tag">&lt;dependency&gt;</span>
+    <span class="tag">&lt;groupId&gt;</span>com.nhl.dflib<span class="tag">&lt;/groupId&gt;</span>
+    <span class="tag">&lt;artifactId&gt;</span>dflib<span class="tag">&lt;/artifactId&gt;</span>
+<span class="tag">&lt;/dependency&gt;</span></code></pre>
+                </div>
+            </div>
+            <div class="paragraph">
+                <p>Create a DataFrame, do some manipulations with it, print the result:</p>
+            </div>
+            <div class="listingblock">
+                <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df1 = DataFrame
+        .foldByRow(<span class="string"><span class="delimiter">&quot;</span><span class="content">a</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">b</span><span class="delimiter">&quot;</span></span>, <span class="string"><span
+            class="delimiter">&quot;</span><span class="content">c</span><span class="delimiter">&quot;</span></span>)
+        .ofStream(IntStream.range(<span class="integer">1</span>, <span class="integer">10000</span>));
+
+DataFrame df2 = df1.selectRows(
+        df1.getColumn(<span class="integer">0</span>).castAsInt().indexInt(i -&gt; i % <span class="integer">2</span> == <span
+            class="integer">0</span>));
+
+<span class="predefined-type">System</span>.out.println(Printers.tabular.toString(df2));</code></pre>
+                </div>
+            </div>
+            <div class="paragraph">
+                <p>When you run this code, console output will look like this:</p>
+            </div>
+            <div class="listingblock">
+                <div class="content">
+<pre>   a    b    c
+---- ---- ----
+   4    5    6
+  10   11   12
+  16   17   18
+...
+9982 9983 9984
+9988 9989 9990
+9994 9995 9996
+1666 rows x 3 columns</pre>
+                </div>
+            </div>
+            <div class="admonitionblock note">
+                <table>
+                    <tr>
+                        <td class="icon">
+                            <i class="fa icon-note" title="Note"></i>
+                        </td>
+                        <td class="content">
+                            We&#8217;ll omit print statements in all the following examples, and will simply display
+                            their output. Details of
+                            printing are discussed in the in <a href="#printers">"Printers" chapter</a>.
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="sect1">
+        <h2 id="_main_data_structures">Main Data Structures</h2>
+        <div class="sectionbody">
+            <div class="paragraph">
+                <p>The two essential DFLib classes are <code>Series</code> and <code>DataFrame</code>.
+                    <code>Series</code> is a 1-dimensional array-like object, and <code>DataFrame</code>
+                    is a 2-dimensional table-like object. Columns in a DataFrame are stored as Series. Additionally, we
+                    will discuss
+                    <code>Index</code> object that stores DataFrame column names.</p>
+            </div>
+            <div class="paragraph">
+                <p>Both DataFrame and Series (and Index) are fully <em>immutable</em>, so all operations on them return
+                    a new instance. Behind
+                    the scenes the library shares as much data as possible between instances, so copying these objects
+                    does not cause
+                    significant performance degradation, and in turn makes DFLib fully thread-safe, with multiple
+                    concurrent operations
+                    possible on the same data structure. Also, immutability means that you can have full snapshots of
+                    your data at each
+                    step of a transformation, simplifying debugging and auditing of data pipelines.</p>
+            </div>
+            <div class="sect2">
+                <h3 id="_series">Series</h3>
+                <div class="paragraph">
+                    <p><code>Series</code> is the simplest of the two data structures. You can think of it as a wrapper
+                        around an array of values.
+                        You can use <code>Series</code> to model sequences of data such as timestamps in a time series.
+                        Series object is parameterized for
+                        the type of data that it holds. So there can be <code>Series&lt;String&gt;</code> or a <code>Series&lt;LocalDate&gt;</code>,
+                        etc. There is also an
+                        important category of "primitive" Series (<code>IntSeries</code>, <code>LongSeries</code>,
+                        <code>DoubleSeries</code>, <code>BooleanSeries</code>) that are optimized
+                        for memory use and arithmetic operations. Of course, each primitive Series can also pose as
+                        Series of a corresponding
+                        wrapper object type (e.g. <code>IntSeries</code> is also a <code>Series&lt;Integer&gt;</code>).
+                    </p>
+                </div>
+                <div class="paragraph">
+                    <p><code>Series</code> object is an important building block of DataFrame, but it defines a number
+                        of useful data
+                        manipulation and transformation operations on its own. Those will be covered in the following
+                        chapters. Here we&#8217;ll
+                        discuss how to create Series.</p>
+                </div>
+                <div class="sect3">
+                    <h4 id="_creating_series_from_arrays">Creating Series from Arrays</h4>
+                    <div class="paragraph">
+                        <p><code>Series</code> can be created using static <code>ofXyz(..)</code> methods on the <code>Series</code>
+                            interface:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+                            <pre class="CodeRay highlight"><code data-lang="java">Series&lt;<span
+                                    class="predefined-type">String</span>&gt; s = Series.of(<span class="string"><span
+                                    class="delimiter">&quot;</span><span class="content">a</span><span
+                                    class="delimiter">&quot;</span></span>, <span class="string"><span
+                                    class="delimiter">&quot;</span><span class="content">bcd</span><span
+                                    class="delimiter">&quot;</span></span>, <span class="string"><span
+                                    class="delimiter">&quot;</span><span class="content">ef</span><span
+                                    class="delimiter">&quot;</span></span>, <span class="string"><span
+                                    class="delimiter">&quot;</span><span class="content">g</span><span
+                                    class="delimiter">&quot;</span></span>);</code></pre>
+                        </div>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+<pre>a
+bcd
+...
+g
+4 elements</pre>
+                        </div>
+                    </div>
+                    <div class="paragraph">
+                        <p>Primitive Series classes have their own factory methods. E.g.:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+                            <pre class="CodeRay highlight"><code data-lang="java">IntSeries is = Series.ofInt(<span
+                                    class="integer">0</span>, <span class="integer">1</span>, -<span
+                                    class="integer">300</span>, <span class="predefined-type">Integer</span>.MAX_VALUE);</code></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="sect3">
+                    <h4 id="_creating_series_by_element">Creating Series By Element</h4>
+                    <div class="paragraph">
+                        <p>If we don&#8217;t have a data array or collection to start with, and instead somehow produce
+                            a sequence of
+                            values of unpredictable length, we can use <code>Series.byElement()</code> API. E.g. the
+                            following example reads data from
+                            an InputStream line by line as Strings:</p>
+                    </div>
+                    <div class="listingblock">
+                        <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java"><span class="comment">// InputStream inputStream = ...</span>
+SeriesAppender&lt;<span class="predefined-type">String</span>, <span class="predefined-type">String</span>&gt; appender = Series
+        .byElement(Extractor.&lt;<span class="predefined-type">String</span>&gt;<span class="error">$</span>col()) <i
+            class="conum" data-value="1"></i><b>(1)</b>
+        .appender();
+
+<span class="predefined-type">Scanner</span> scanner = <span class="keyword">new</span> <span class="predefined-type">Scanner</span>(inputStream);
+<span class="keyword">while</span> (scanner.hasNext()) {
+    appender.append(scanner.next()); <i class="conum" data-value="2"></i><b>(2)</b>
+}
+
+Series&lt;<span class="predefined-type">String</span>&gt; s = appender.toSeries();</code></pre>
+                        </div>
+                    </div>
+                    <div class="colist arabic">
+                        <table>
+                            <tr>
+                                <td><i class="conum" data-value="1"></i><b>1</b></td>
+                                <td>Create Series "appender" that will accumulate values. For primitive Series you would
+                                    use <code>Extractor.$int(..)</code>,
+                                    <code>Extractor.$long(..)</code> and so on
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><i class="conum" data-value="2"></i><b>2</b></td>
+                                <td>Append values as they are read one-by-one</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="_dataframe">DataFrame</h3>
+                <div class="paragraph">
+                    <p><code>DataFrame</code> is an in-memory table with rows and columns. Each column has a name, and
+                        is represented as a <code>Series</code> object.
+                        DataFrame can contain columns of different kinds and is not parameterized for a single type.</p>
+                </div>
+                <div class="paragraph">
+                    <p>There are a few ways to create a DataFrame. Here we&#8217;ll show "builder" API to convert
+                        arrays, Streams, Collections,
+                        Series and other in-memory data into DataFrames.</p>
+                </div>
+                <div class="admonitionblock note">
+                    <table>
+                        <tr>
+                            <td class="icon">
+                                <i class="fa icon-note" title="Note"></i>
+                            </td>
+                            <td class="content">
+                                More often than not, a DataFrame is not created manually and is instead loaded from (and
+                                saved to) an external
+                                source, like a <a href="#jdbc">database</a> or a <a href="#csv">CSV file</a>. Those are
+                                discussed in separate documentation chapters.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>First example - adding data row by row:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .byArrayRow(<span class="string"><span class="delimiter">&quot;</span><span class="content">name</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">age</span><span class="delimiter">&quot;</span></span>) <i class="conum" data-value="1"></i><b>(1)</b>
+        .appender() <i class="conum" data-value="2"></i><b>(2)</b>
+        .append(<span class="string"><span class="delimiter">&quot;</span><span class="content">Joe</span><span
+            class="delimiter">&quot;</span></span>, <span class="integer">18</span>)   <i class="conum"
+                                                                                          data-value="3"></i><b>(3)</b>
+        .append(<span class="string"><span class="delimiter">&quot;</span><span class="content">Andrus</span><span
+            class="delimiter">&quot;</span></span>, <span class="integer">49</span>)
+        .append(<span class="string"><span class="delimiter">&quot;</span><span class="content">Joan</span><span
+            class="delimiter">&quot;</span></span>, <span class="integer">32</span>)
+        .toDataFrame();</code></pre>
+                    </div>
+                </div>
+                <div class="colist arabic">
+                    <table>
+                        <tr>
+                            <td><i class="conum" data-value="1"></i><b>1</b></td>
+                            <td>A special builder is created to append each row as a vararg array</td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="2"></i><b>2</b></td>
+                            <td>The builder creates an "appender" object. While here we are using the builder with
+                                default settings, it has extra
+                                methods to configure capacity, data sampling, etc.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="3"></i><b>3</b></td>
+                            <td>Passing individual rows to the appender one-by-one</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>The resulting DataFrame looks like this:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre>name   age
+------ ---
+Joe    18
+Andrus 49
+Joan   32
+3 rows x 2 columns</pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>A more general example - creating a DataFrame from a list of objects by "extracting" column data
+                        from object properties:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre>        record Person(String name, int age) {
+        }
+
+        List&lt;Person&gt; people = List.of(
+                new Person("Joe", 18),
+                new Person("Andrus", 49),
+                new Person("Joan", 32));
+
+        DataFrame df = DataFrame
+                .byRow( <i class="conum" data-value="1"></i><b>(1)</b>
+                        Extractor.$col(Person::name),
+                        Extractor.$int(Person::age))
+                .columnNames("name", "age") <i class="conum" data-value="2"></i><b>(2)</b>
+                .appender() <i class="conum" data-value="3"></i><b>(3)</b>
+                .append(people)   <i class="conum" data-value="4"></i><b>(4)</b>
+                .toDataFrame();</pre>
+                    </div>
+                </div>
+                <div class="colist arabic">
+                    <table>
+                        <tr>
+                            <td><i class="conum" data-value="1"></i><b>1</b></td>
+                            <td>The builder is started with an array of Extractors. Each extractor generates its own
+                                column, filling it with a
+                                corresponding object property.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="2"></i><b>2</b></td>
+                            <td>Specifying the names of the DataFrame columns. If omitted, column names are assigned
+                                automatically.
+                                in step 1.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="3"></i><b>3</b></td>
+                            <td>Creating a row-by-row appender</td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="4"></i><b>4</b></td>
+                            <td>Appending the list.</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>The resulting DataFrame looks like this:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre>name   age
+------ ---
+Joe    18
+Andrus 49
+Joan   32
+3 rows x 2 columns</pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>Another example - a single-dimensional array can be "folded" into a DataFrame row-by-row:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .foldByRow(<span class="string"><span class="delimiter">&quot;</span><span class="content">name</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">age</span><span class="delimiter">&quot;</span></span>) <i class="conum" data-value="1"></i><b>(1)</b>
+        .of(<span class="string"><span class="delimiter">&quot;</span><span class="content">Joe</span><span
+            class="delimiter">&quot;</span></span>, <span class="integer">18</span>, <span class="string"><span
+            class="delimiter">&quot;</span><span class="content">Andrus</span><span
+            class="delimiter">&quot;</span></span>, <span class="integer">49</span>, <span class="string"><span
+            class="delimiter">&quot;</span><span class="content">Joan</span><span class="delimiter">&quot;</span></span>, <span
+            class="integer">32</span>); <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
+                    </div>
+                </div>
+                <div class="colist arabic">
+                    <table>
+                        <tr>
+                            <td><i class="conum" data-value="1"></i><b>1</b></td>
+                            <td>Folding Builder is created</td>
+                        </tr>
+                        <tr>
+                            <td><i class="conum" data-value="2"></i><b>2</b></td>
+                            <td>Passing a varargs array of values, that is folded to match the specified number of
+                                columns, row by row.
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="paragraph">
+                    <p>Same, but folding column-by-column:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .foldByColumn(<span class="string"><span class="delimiter">&quot;</span><span class="content">name</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">age</span><span class="delimiter">&quot;</span></span>)
+        .of(<span class="string"><span class="delimiter">&quot;</span><span class="content">Joe</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">Andrus</span><span class="delimiter">&quot;</span></span>, <span class="string"><span
+            class="delimiter">&quot;</span><span class="content">Joan</span><span class="delimiter">&quot;</span></span>, <span
+            class="integer">18</span>, <span class="integer">49</span>, <span class="integer">32</span>);</code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>You can also create DataFrames from collections or Streams (folded either by row or by column).
+                        Here is an example
+                        of how to use a Stream of primitive ints, creating a DataFrame made of memory-efficient <code>IntSeries</code>
+                        columns:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .foldByColumn(<span class="string"><span class="delimiter">&quot;</span><span class="content">col1</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">col2</span><span class="delimiter">&quot;</span></span>)
+        .ofStream(IntStream.range(<span class="integer">0</span>, <span class="integer">10000</span>));</code></pre>
+                    </div>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre>col1 col2
+---- ----
+   0 5000
+   1 5001
+   2 5002
+...
+4997 9997
+4998 9998
+4999 9999
+5000 rows x 2 columns</pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>Finally, a DataFrame can be created from an array of Series, each Series representing a
+                        column:</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .byColumn(<span class="string"><span class="delimiter">&quot;</span><span class="content">name</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">age</span><span class="delimiter">&quot;</span></span>)
+        .of(
+                Series.of(<span class="string"><span class="delimiter">&quot;</span><span
+            class="content">Joe</span><span class="delimiter">&quot;</span></span>, <span class="string"><span
+            class="delimiter">&quot;</span><span class="content">Andrus</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">Joan</span><span class="delimiter">&quot;</span></span>),
+                Series.ofInt(<span class="integer">18</span>, <span class="integer">49</span>, <span
+            class="integer">32</span>)
+        );</code></pre>
+                    </div>
+                </div>
+                <div class="paragraph">
+                    <p>This is the most efficient way, as an array of Series is how each DataFrame is structured
+                        internally.</p>
+                </div>
+                <div class="paragraph">
+                    <p>Now that we&#8217;ve discussed how to create Series and DataFrames, we&#8217;ll talk about <a
+                            href="#printers">printing their contents</a>,
+                        and then will continue to the chapters that describe data operations.</p>
+                </div>
+            </div>
+            <div class="sect2">
+                <h3 id="index">Index</h3>
+                <div class="paragraph">
+                    <p><code>Index</code> is somewhat similar to Series. It stores a sequence of String labels,
+                        corresponding to column labels in a
+                        DataFrame it is attached to. While you normally won&#8217;t need to create or manipulate Index
+                        outside a DataFrame, you
+                        may use it to access DataFrame columns labels.</p>
+                </div>
+                <div class="listingblock">
+                    <div class="content">
+<pre class="CodeRay highlight"><code data-lang="java">DataFrame df = DataFrame
+        .foldByColumn(<span class="string"><span class="delimiter">&quot;</span><span class="content">col1</span><span
+            class="delimiter">&quot;</span></span>, <span class="string"><span class="delimiter">&quot;</span><span
+            class="content">col2</span><span class="delimiter">&quot;</span></span>)
+        .of(IntStream.range(<span class="integer">0</span>, <span class="integer">10000</span>));
+
+<span class="predefined-type">String</span><span class="type">[]</span> labels = df.getColumnsIndex().getLabels(); <i
+            class="conum" data-value="1"></i><b>(1)</b></code></pre>
+                    </div>
+                </div>
+                <div class="colist arabic">
+                    <table>
+                        <tr>
+                            <td><i class="conum" data-value="1"></i><b>1</b></td>
+                            <td>Access DataFrame index and read label names.</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

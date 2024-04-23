@@ -22,6 +22,7 @@ package io.bootique.tools.asciidoctorj;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,11 +48,12 @@ class ProcessorMultipage implements ContentProcessor {
 
         buildContentPages(rootSections);
         buildTocPage(jsoupDoc, rootSections);
-        return buildIndexPage(rootSections);
+        return buildIndexPage(jsoupDoc, rootSections);
     }
 
-    private String buildIndexPage(List<Section> sections) {
-        StringBuilder sb = new StringBuilder();
+    private String buildIndexPage(Document jsoupDoc, List<Section> sections) {
+        Elements preamble = jsoupDoc.select("#preamble");
+        StringBuilder sb = new StringBuilder(preamble.outerHtml()).append("\n");
         sectionListHtml(sections, sb);
         return sb.toString();
     }
