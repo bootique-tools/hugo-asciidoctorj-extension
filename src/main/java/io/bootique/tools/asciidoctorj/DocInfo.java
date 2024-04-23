@@ -36,6 +36,7 @@ class DocInfo {
     private static final String MULTIPAGE_HEADER = "hugo-multipage-header";
     private static final String MULTIPAGE_REF = "hugo-multipage-ref";
     private static final String FONT_AWESOME_ICONS = "hugo-font-awesome-icons";
+    private static final String KEEP_PREAMBLE = "hugo-keep-preamble";
 
     String documentName;
     String header;
@@ -44,6 +45,7 @@ class DocInfo {
     int multipageLevel;
     String multipageRef;
     boolean convertToFa;
+    private boolean keepPreamble;
 
     @SuppressWarnings("unchecked")
     DocInfo(Document document, InternalLogger logger) {
@@ -75,6 +77,7 @@ class DocInfo {
         multipageRef = document.getAttribute(MULTIPAGE_REF, "").toString();
         convertToFa = Boolean.parseBoolean(document
                 .getAttribute(FONT_AWESOME_ICONS, "true").toString());
+        keepPreamble = Boolean.parseBoolean(document.getAttribute(KEEP_PREAMBLE, "false").toString());
     }
 
     String documentName() {
@@ -103,5 +106,9 @@ class DocInfo {
 
     boolean convertToFa() {
         return convertToFa;
+    }
+
+    public boolean keepPreamble() {
+        return keepPreamble;
     }
 }

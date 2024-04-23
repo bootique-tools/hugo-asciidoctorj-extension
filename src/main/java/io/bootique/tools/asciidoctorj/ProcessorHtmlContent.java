@@ -31,7 +31,9 @@ class ProcessorHtmlContent implements ContentProcessor {
                 el.addClass(codeClass);
             }
         });
-        jsoupDoc.select("div#preamble").remove();
+        if(!context.docInfo().keepPreamble()) {
+            jsoupDoc.select("div#preamble").remove();
+        }
         return jsoupDoc.body().html();
     }
 }

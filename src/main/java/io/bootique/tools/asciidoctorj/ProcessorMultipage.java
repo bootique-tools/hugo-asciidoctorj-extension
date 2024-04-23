@@ -53,6 +53,7 @@ class ProcessorMultipage implements ContentProcessor {
 
     private String buildIndexPage(Document jsoupDoc, List<Section> sections) {
         Elements preamble = jsoupDoc.select("#preamble");
+        context.logger().info("peamble: " + preamble.text());
         StringBuilder sb = new StringBuilder(preamble.outerHtml()).append("\n");
         sectionListHtml(sections, sb);
         return sb.toString();
