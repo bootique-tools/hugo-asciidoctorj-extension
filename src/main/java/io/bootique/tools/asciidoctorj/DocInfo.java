@@ -22,6 +22,8 @@ package io.bootique.tools.asciidoctorj;
 import org.asciidoctor.Options;
 import org.asciidoctor.ast.Document;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -51,33 +53,66 @@ class DocInfo {
     DocInfo(Document document, InternalLogger logger) {
         documentName = ((Map<String, ?>)document.getOptions().get(Options.ATTRIBUTES)).get("docname").toString();
         String headerFile = document.getAttribute(HEADER, "").toString();
-        if(!headerFile.isEmpty()) {
-            header = document.readAsset(headerFile, Collections.emptyMap());
-            if(header == null) {
-                logger.warn("Header file '" + headerFile + "' not found. Using a default header.");
-                header = EMPTY_FRONT_MATTER;
-            }
-        } else {
-            header = EMPTY_FRONT_MATTER;
-        }
+        header = readHeader(document, headerFile, logger, "Header");
         multipage = Boolean.parseBoolean(document
                 .getAttribute(MULTIPAGE, "false").toString());
         multipageLevel = Integer.parseInt(document
                 .getAttribute(MULTIPAGE_LEVEL, MULTIPAGE_DEFAULT_LEVEL).toString());
         String multipageHeaderFile = document.getAttribute(MULTIPAGE_HEADER, "").toString();
-        if(!multipageHeaderFile.isEmpty()) {
-            multipageHeader = document.readAsset(multipageHeaderFile, Collections.emptyMap());
-            if(multipageHeader == null) {
-                logger.warn("Multipage header file '" + multipageHeaderFile + "' not found. Using a default header.");
-                multipageHeader = EMPTY_FRONT_MATTER;
-            }
-        } else {
-            multipageHeader = EMPTY_FRONT_MATTER;
-        }
+        multipageHeader = readHeader(document, multipageHeaderFile, logger, "Multipage header");
         multipageRef = document.getAttribute(MULTIPAGE_REF, "").toString();
         convertToFa = Boolean.parseBoolean(document
                 .getAttribute(FONT_AWESOME_ICONS, "true").toString());
         keepPreamble = Boolean.parseBoolean(document.getAttribute(KEEP_PREAMBLE, "false").toString());
+    }
+
+    private String readHeader(Document document, String headerFile, InternalLogger logger, String label) {
+        if(headerFile.isEmpty()) {
+            return EMPTY_FRONT_MATTER;
+        }
+
+        String content = document.readAsset(headerFile, Collections.emptyMap());
+        if(content != null) {
+            return content;
+        }
+
+        Path headerPath = Paths.get(headerFile);
+        if(!headerPath.isAbsolute()) {
+            String docdirHeaderFile = resolveAssetPath(stringAttribute(document, "docdir"), headerFile);
+            content = readResolvedHeader(document, headerFile, docdirHeaderFile);
+            if(content != null) {
+                return content;
+            }
+
+            Object baseDir = document.getOptions().get(Options.BASEDIR);
+            String baseDirHeaderFile = resolveAssetPath(baseDir != null ? baseDir.toString() : "", headerFile);
+            if(!baseDirHeaderFile.equals(docdirHeaderFile)) {
+                content = readResolvedHeader(document, headerFile, baseDirHeaderFile);
+                if(content != null) {
+                    return content;
+                }
+            }
+        }
+
+        logger.warn(label + " file '" + headerFile + "' not found. Using a default header.");
+        return EMPTY_FRONT_MATTER;
+    }
+
+    private String readResolvedHeader(Document document, String headerFile, String resolvedHeaderFile) {
+        if(resolvedHeaderFile.isEmpty() || resolvedHeaderFile.equals(headerFile)) {
+            return null;
+        }
+
+        return document.readAsset(resolvedHeaderFile, Collections.emptyMap());
+    }
+
+    private String resolveAssetPath(String baseDir, String path) {
+        return baseDir.isEmpty() ? "" : Paths.get(baseDir, path).toString();
+    }
+
+    private String stringAttribute(Document document, String name) {
+        Object value = document.getAttribute(name, "");
+        return value == null ? "" : value.toString();
     }
 
     String documentName() {
