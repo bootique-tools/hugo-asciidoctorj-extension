@@ -41,6 +41,7 @@
         <jsoup.version>1.17.2</jsoup.version>
         <junit5.version>5.10.2</junit5.version>
         <mockito.version>5.23.0</mockito.version>
+        <central.publishing.maven.plugin.version>0.7.0</central.publishing.maven.plugin.version>
     </properties>
 
     <url>https://github.com/bootique-tools/hugo-asciidoctorj-extension/</url>
@@ -71,15 +72,9 @@
 
     <distributionManagement>
         <repository>
-            <id>oss-sonatype-releases</id>
-            <name>Deployment Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <id>sonatype-central</id>
+            <name>Sonatype Central Portal Repository</name>
         </repository>
-        <snapshotRepository>
-            <id>oss-sonatype-snapshots</id>
-            <name>Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
     </distributionManagement>
 
     <dependencies>
@@ -175,18 +170,6 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>oss-sonatype-releases</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
-                    <!-- default timeout (5 minute) could be not enough -->
-                    <stagingProgressTimeoutMinutes>20</stagingProgressTimeoutMinutes>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -237,6 +220,15 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.maven.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>sonatype-central</publishingServerId>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
