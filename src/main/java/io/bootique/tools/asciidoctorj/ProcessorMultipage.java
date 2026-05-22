@@ -52,9 +52,13 @@ class ProcessorMultipage implements ContentProcessor {
     }
 
     private String buildIndexPage(Document jsoupDoc, List<Section> sections) {
-        Elements preamble = jsoupDoc.select("#preamble");
-        context.logger().info("peamble: " + preamble.text());
-        StringBuilder sb = new StringBuilder(preamble.outerHtml()).append("\n");
+        StringBuilder sb = new StringBuilder();
+        Elements selected = jsoupDoc.select(".h1");
+        context.logger().info("header: " + selected.text());
+        if(context.docInfo().keepPreamble()) {
+            Elements preamble = jsoupDoc.select("#preamble");
+            sb.append(preamble.outerHtml()).append("\n");
+        }
         sectionListHtml(sections, sb);
         return sb.toString();
     }
@@ -169,14 +173,14 @@ class ProcessorMultipage implements ContentProcessor {
     }
 
     private void sectionListHtml(List<Section> subsections, StringBuilder sb) {
-        sb.append("<ul>\n");
+        sb.append("<div id=\"index-section-toc\"><ul>\n");
         subsections.forEach(s -> {
             String innerSectionId = s.id();
             sb.append("<li><a href=\"").append(ref(innerSectionId)).append("\">")
                     .append(s.title())
                     .append("</a>\n");
         });
-        sb.append("</ul>");
+        sb.append("</ul></div>");
     }
 
     private String ref(String sectionId) {

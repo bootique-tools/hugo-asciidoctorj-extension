@@ -18,7 +18,7 @@ class ProcessorMultipageTest {
     @Test
     void noProcessing() throws IOException {
         String content = getTestContent();
-        ProcessorContext context = getContext(false);
+        ProcessorContext context = getContext(false, false);
 
         String processed = multipage.process(context, content);
         assertEquals(content, processed);
@@ -27,7 +27,7 @@ class ProcessorMultipageTest {
     @Test
     void defaultMultipageConfig() throws IOException {
         String content = getTestContent();
-        ProcessorContext context = getContext(true);
+        ProcessorContext context = getContext(true, true);
 
         String processed = multipage.process(context, content);
         assertEquals("<div id=\"preamble\">\n" +
@@ -37,16 +37,29 @@ class ProcessorMultipageTest {
                 "  </div>\n" +
                 " </div>\n" +
                 "</div>\n" +
-                "<ul>\n" +
+                "<div id=\"index-section-toc\"><ul>\n" +
                 "<li><a href=\"/getting_started_with_dflib\">Getting Started with DFLib</a>\n" +
                 "<li><a href=\"/main_data_structures\">Main Data Structures</a>\n" +
-                "</ul>", processed);
+                "</ul></div>", processed);
     }
 
-    private static ProcessorContext getContext(boolean multipage) {
+    @Test
+    void multipageDropPreamble() throws IOException {
+        String content = getTestContent();
+        ProcessorContext context = getContext(true, false);
+
+        String processed = multipage.process(context, content);
+        assertEquals("<div id=\"index-section-toc\"><ul>\n" +
+                "<li><a href=\"/getting_started_with_dflib\">Getting Started with DFLib</a>\n" +
+                "<li><a href=\"/main_data_structures\">Main Data Structures</a>\n" +
+                "</ul></div>", processed);
+    }
+
+    private static ProcessorContext getContext(boolean multipage, boolean keepPreamble) {
         DocInfo docInfo = mock(DocInfo.class);
 
         when(docInfo.isMultipage()).thenReturn(multipage);
+        when(docInfo.keepPreamble()).thenReturn(keepPreamble);
         when(docInfo.multipageHeader()).thenReturn("---\n---\n");
         when(docInfo.multipageRef()).thenReturn("");
         when(docInfo.documentName()).thenReturn("");
